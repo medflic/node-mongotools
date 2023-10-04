@@ -40,6 +40,7 @@
     "author": "Brice Vandeputte"
   },
   "dependencies": {
+    "cron": "^3.0.0",
     "dateformat": "^5.0.3",
     "dropbox-v2-api": "^2.5.10-next.3"
   },
