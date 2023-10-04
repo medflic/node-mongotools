@@ -51,8 +51,9 @@ export SCHEDULED_TIME_2="'0 0 0 * * *"
 # Environment variable for SCHEDULED_TIME format should be  SCHEDULED_TIME_1 SCHEDULED_TIME_2, SCHEDULED_TIME_3...
 
 
-node mt_backup_and_rotate.js backupFolderPath
-
+node mt_backup_and_rotate.js
+            OR 
+pm2 start mt_backup_and_rotate.js
 ```
 
 ### To Restore
