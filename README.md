@@ -37,6 +37,7 @@ db.createUser({
 ### To Backup and Rotate
 ```bash
 # create a mongo dump and rotate
+export SCHEDULED_BACKUP=true # if not true, it will create a backup one time. it will not be scheduled
 export MONGO_URI_1=mongodb://user:pass@localhost:27017/db1
 export MONGO_URI_2=mongodb://user:pass@localhost:27017/db2
 export BACKUP_DIR_PATH_1=backup/db/one
