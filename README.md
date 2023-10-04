@@ -1,5 +1,4 @@
-# node-mongotools
-[![NPM](https://nodei.co/npm/node-mongotools.png?compact=true)](https://npmjs.org/package/node-mongotools)
+# node-mongo backup and restore
 
 This project provides 2 wrappers :
 - **mongodump**,
@@ -24,7 +23,6 @@ git clone https://github.com/boly38/node-mongotools.git
 npm install
 
 ```
-### PreRequisite
 #### Setup the user with role "restore" to Restore the database (this is mandatory when restore from one db to another db)
 ```bash
 use admin;
@@ -39,7 +37,20 @@ db.createUser({
 ### To Backup and Rotate
 ```bash
 # create a mongo dump and rotate
-export MY_MONGO_URI=mongodb://user:pass@localhost:27017/db
+export MONGO_URI_1=mongodb://user:pass@localhost:27017/db1
+export MONGO_URI_2=mongodb://user:pass@localhost:27017/db2
+export BACKUP_DIR_PATH_1=backup/db/one
+export BACKUP_DIR_PATH_2=backup/db/two
+export SCHEDULED_TIME_1="'0 0 0 * * *"
+export SCHEDULED_TIME_2="'0 0 0 * * *"
+
+# Environment variable for MONGO_URI format should be  MONGO_URI_1 MONGO_URI_2, MONGO_URI_3...
+
+# Environment variable for BACKUP_DIR_PATH format should be  BACKUP_DIR_PATH_1 BACKUP_DIR_PATH_2, BACKUP_DIR_PATH_3...
+
+# Environment variable for SCHEDULED_TIME format should be  SCHEDULED_TIME_1 SCHEDULED_TIME_2, SCHEDULED_TIME_3...
+
+
 node mt_backup_and_rotate.js backupFolderPath
 
 ```
