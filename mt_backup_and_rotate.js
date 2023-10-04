@@ -4,12 +4,11 @@ import os from "os";
 // import { MongoTools, MTOptions, MTCommand } from "node-mongotools";
 
 // import from inside project
-import { MongoTools, MTOptions, MTCommand } from "../lib/mt.js";
+import { MongoTools, MTOptions, MTCommand } from "./lib/mt.js";
 
 async function dumpAndRotate(uri, path){
   var mt = new MongoTools();
   var mtc = new MTCommand();// to reuse log methods
-  // mongodump
   const dumpResult = await mt.mongodump({ uri, path })
     .catch(mtc.logError.bind(mtc));
   if (dumpResult === undefined) {// error case
@@ -26,7 +25,9 @@ async function dumpAndRotate(uri, path){
   mtc.logSuccess(rotationResult);
 }
 
-const uri = process.env.MY_MONGO_URI
-const path = `backup/${os.hostname()}`;
+
+
+const path = process.argv.slice(2)[0] ||  `backup/${os.hostname()}`
+const uri = process.env.MONGO_URI;
 
 dumpAndRotate(uri, path);

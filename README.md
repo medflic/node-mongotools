@@ -23,56 +23,62 @@ git clone https://github.com/boly38/node-mongotools.git
 # install dependencies
 npm install
 
-#~ setup environment variables
-cp env/initEnv.template.sh env/initEnv.dontpush.sh
-# you must update env/initEnv.dontpush.sh
 ```
-
-### Set your preferences
-```
-# source your options
-. ./env/initEnv.dontpush.sh
-```
-
-### Basic feature
+### PreRequisite
+#### Setup the user with role "restore" to Restore the database (this is mandatory when restore from one db to another db)
 ```bash
-# create a mongo dump
-node mt dump
+use admin;
+db.createUser({
+    user: 'xxx',
+    pwd: 'xxxx',
+    roles: ['restore']
+});
+```
 
-# create a encrypted mongo dump
-node mt dumpz
 
-# list backups
-node mt list
+### To Backup and Rotate
+```bash
+# create a mongo dump and rotate
+export MY_MONGO_URI=mongodb://user:pass@localhost:27017/db
+node mt_backup_and_rotate.js backupFolderPath
 
-# restore a mongo local dump
-# please note that mt restore use following options : dropBeforeRestore: true, deleteDumpAfterRestore: true
-node mt restore backup/myDatabase__2020-11-08_150102.gz
+```
 
-# rotate backup files
-node mt rotation
+### To Restore
+#### PreRequisite
+```bash
+# Setup the user with role "restore" to Restore the database (this is mandatory when restore from one db to another db)
+use admin;
+db.createUser({
+    user: 'xxx',
+    pwd: 'xxxx',
+    roles: ['restore']
+});
+```
+#### Restore a mongo local dump
+```bash
+# please note that mt restore use following options :  
+    dropBeforeRestore: false, 
+    deleteDumpAfterRestore: false
+
+export MONGO_HOST=localhost
+export MONGO_PORT=27017
+export MONGO_USER_NAME=user
+export MONGO_PASSWORD=pass
+export MONGO_DB=backupedDb
+export MONGO_TARGET_DB=restoreDb
+
+if MONGO_TARGET_DB is not given it will try to restore it to the same db where the backup has taken
+
+node mt_restore backup/myDatabase__2020-11-08_150102.gz
+
+
 
 # Helper : show current options values
 node mt options
 ```
 
-### Add in-line extra options
 
-You could play with env default options plus in-line command extra options
-```bash
-# create dump of a given 'shippingprices' collection, provide a target backup name as '2023_01_shippingPrices.gz', and show mongodump command
-MT_COLLECTION=shippingprices MT_FILENAME=2023_01_shippingPrices.gz MT_SHOW_COMMAND=true node mt dump
-
-# show backup in list
-node mt list
-
-# using mongo: drop a given collection
-mongo myDb --eval "db.shippingprices.drop()"
-
-# restore collection
-MSYS_NO_PATHCONV=1 MT_COLLECTION=shippingprices MT_SHOW_COMMAND=true node mt restore /backup/2023_01_shippingprices.gz
-# Note that collection option will produce wildcard in nsInclude arg '--nsInclude myDb.*'
-```
 
 
 ### Dropbox feature
@@ -91,48 +97,6 @@ MSYS_NO_PATHCONV=1 node mt restore /backup/myDatabase__2020-11-08_150102.gz
 
 # rotate local and dropbox backup files
 node mt rotation
-```
-
-## Library use
-
-### Install dependency
-
-You have to import as dependency
-```
-npm install node-mongotools
-```
-
-### Define the requirements, example:
-``` 
-import { MongoTools, MTOptions, MTCommand } from "node-mongotools";
-
-var mongoTools = new MongoTools();
-const mtOptions = {
-        db: 'myDb',
-        port: 17017,
-        path: '/opt/myapp/backups',
-        dropboxToken: process.env.MYAPP_DROPBOX_SECRET_TOKEN
-      };
-```
-
-### List dumps
-```
-var promiseResult = mongoTools.list(mtOptions);
-```
-
-### Dump
-```
-var promiseResult = mongoTools.mongodump(mtOptions);
-```
-
-### Restore
-```
-var promiseResult = mongoTools.mongorestore(mtOptions);
-```
-
-### Rotation
-```
-var promiseResult = mongoTools.rotation(mtOptions);
 ```
 
 ## Mongo tools options
@@ -285,23 +249,3 @@ Example details: if there is a backup that is more than 3 days old, keep 2 newer
 
 Dropbox limits:
 - rotation feature will not apply if dropbox backup target directory content contains more than 2000 files.
-
-## How to contribute
-You're not a dev ? just submit an issue (bug, improvements, questions). Or else:
-* Clone
-* Install deps
-* Then mocha tests
-```
-git clone https://github.com/boly38/node-mongotools.git
-npm install
-npm run test
-```
-* you could also fork, feature branch, then submit a pull request.
-
-### Services or activated bots
-
-| badge                                                                                                                                                              | name                            | description                                               |
-|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|:----------------------------------------------------------|
-| ![CI/CD](https://github.com/boly38/node-mongotools/workflows/mongotools-ci/badge.svg)                                                                              | Github actions                  | Continuous tests.                                         |
-| [![Audit](https://github.com/boly38/node-mongotools/actions/workflows/audit.yml/badge.svg)](https://github.com/boly38/node-mongotools/actions/workflows/audit.yml) | Github actions                  | Continuous vulnerability audit.                           |
-| [![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)                                                             | [Houndci](https://houndci.com/) | JavaScript  automated review (configured by `.hound.yml`) |
