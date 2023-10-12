@@ -3,7 +3,7 @@ import { CronJob } from 'cron';
 async function dumpAndRotate(uri, path, { dropboxToken, dropBoxPath } = {}) {
   var mt = new MongoTools();
   var mtc = new MTCommand();// to reuse log methods
-  const dumpResult = await mt.mongodump({ uri, path, dropboxToken, path: dropBoxPath })
+  const dumpResult = await mt.mongodump({ uri, path, dropboxToken, dropboxLocalPath: dropBoxPath })
     .catch(mtc.logError.bind(mtc));
   if (dumpResult === undefined) {// error case
     process.exit(1);
