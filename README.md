@@ -44,7 +44,7 @@ export BACKUP_DIR_PATH_1=backup/db/one
 export BACKUP_DIR_PATH_2=backup/db/two
 export SCHEDULED_TIME_1="'0 0 0 * * *"
 export SCHEDULED_TIME_2="'0 0 0 * * *"
-
+export DROP_BOX_TOKEN="DROP_BOX_TOKEN" # this will enable uploading to DROP BOX
 # Environment variable for MONGO_URI format should be  MONGO_URI_1 MONGO_URI_2, MONGO_URI_3...
 
 # Environment variable for BACKUP_DIR_PATH format should be  BACKUP_DIR_PATH_1 BACKUP_DIR_PATH_2, BACKUP_DIR_PATH_3...

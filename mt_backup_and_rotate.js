@@ -2,10 +2,10 @@ import os from "os";
 
 import { MongoTools, MTOptions, MTCommand } from "./lib/mt.js";
 import { CronJob } from 'cron';
-async function dumpAndRotate(uri, path){
+async function dumpAndRotate(uri, path, { dropboxToken } = {}) {
   var mt = new MongoTools();
   var mtc = new MTCommand();// to reuse log methods
-  const dumpResult = await mt.mongodump({ uri, path })
+  const dumpResult = await mt.mongodump({ uri, path, dropboxToken })
     .catch(mtc.logError.bind(mtc));
   if (dumpResult === undefined) {// error case
     process.exit(1);
@@ -20,6 +20,8 @@ async function dumpAndRotate(uri, path){
   }
   mtc.logSuccess(rotationResult);
 }
+
+
 
 const backupPath = process.argv.slice(2)[0] ||  `backup/${os.hostname()}`
 
@@ -41,6 +43,6 @@ const backupPath = process.argv.slice(2)[0] ||  `backup/${os.hostname()}`
       new CronJob(scheduledTime, () => dumpAndRotate(uri, path), null, true, 'Asia/Kolkata');
       console.log(`*** SUCCESS BACKUP INITIATED for ${uri.slice(-7)} AND BACKUP TIME IS ${scheduledTime} **** `)
     } else {
-      dumpAndRotate(uri, path);
+      dumpAndRotate(uri, path, {  dropboxToken: process.env.DROP_BOX_TOKEN });
     }
 }
