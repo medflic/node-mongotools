@@ -1,5 +1,4 @@
-# node-mongotools
-[![NPM](https://nodei.co/npm/node-mongotools.png?compact=true)](https://npmjs.org/package/node-mongotools)
+# node-mongo backup and restore
 
 This project provides 2 wrappers :
 - **mongodump**,
@@ -23,285 +22,81 @@ git clone https://github.com/boly38/node-mongotools.git
 # install dependencies
 npm install
 
-#~ setup environment variables
-cp env/initEnv.template.sh env/initEnv.dontpush.sh
-# you must update env/initEnv.dontpush.sh
 ```
-
-### Set your preferences
-```
-# source your options
-. ./env/initEnv.dontpush.sh
-```
-
-### Basic feature
+#### Setup the user with role "restore" to Restore the database (this is mandatory when restore from one db to another db)
 ```bash
-# create a mongo dump
-node mt dump
+use admin;
+db.createUser({
+    user: 'xxx',
+    pwd: 'xxxx',
+    roles: ['restore']
+});
+```
 
-# create a encrypted mongo dump
-node mt dumpz
 
-# list backups
-node mt list
+### To Backup and Rotate
+```bash
+# create a mongo dump and rotate
+export SCHEDULED_BACKUP=true # if not true, it will create a backup one time. it will not be scheduled
+export MONGO_URI_1=mongodb://user:pass@localhost:27017/db1
+export MONGO_URI_2=mongodb://user:pass@localhost:27017/db2
+export BACKUP_DIR_PATH_1=backup/db/one
+export BACKUP_DIR_PATH_2=backup/db/two
+export SCHEDULED_TIME_1="0 0 0 * * *"
+export SCHEDULED_TIME_2="0 0 0 * * *"
 
-# restore a mongo local dump
-# please note that mt restore use following options : dropBeforeRestore: true, deleteDumpAfterRestore: true
-node mt restore backup/myDatabase__2020-11-08_150102.gz
+export DROP_BOX_CLIENT_ID="DROP_BOX_APP_CLIENT_ID"
+export DROP_BOX_CLIENT_SECRET="DROP_BOX_APP_CLIENT_SECRET"
+export DROP_BOX_REFRESH_TOKEN="DROP_BOX_APP_REFRESH_TOKEN" # this will enable uploading to DROP BOX
+export DROP_BOX_BACKUP_PATH_1="backup/db_1"
+export DROP_BOX_BACKUP_PATH_2="backup/db_2"
+# Environment variable for MONGO_URI format should be  MONGO_URI_1 MONGO_URI_2, MONGO_URI_3...
 
-# rotate backup files
-node mt rotation
+# Environment variable for BACKUP_DIR_PATH format should be  BACKUP_DIR_PATH_1 BACKUP_DIR_PATH_2, BACKUP_DIR_PATH_3...
+
+# Environment variable for SCHEDULED_TIME format should be  SCHEDULED_TIME_1 SCHEDULED_TIME_2, SCHEDULED_TIME_3...
+
+
+node mt_backup_and_rotate.js
+            OR 
+pm2 start mt_backup_and_rotate.js
+```
+
+### To Restore
+#### PreRequisite
+```bash
+# Setup the user with role "restore" to Restore the database (this is mandatory when restore from one db to another db)
+use admin;
+db.createUser({
+    user: 'xxx',
+    pwd: 'xxxx',
+    roles: ['restore']
+});
+```
+#### Restore a mongo local dump
+```bash
+# please note that mt restore use following options :  
+    dropBeforeRestore: false, 
+    deleteDumpAfterRestore: false
+
+export MONGO_HOST=localhost
+export MONGO_PORT=27017
+export MONGO_USER_NAME=user
+export MONGO_PASSWORD=pass
+export MONGO_DB=backupedDb
+export MONGO_TARGET_DB=restoreDb
+
+if MONGO_TARGET_DB is not given it will try to restore it to the same db where the backup has taken
+
+node mt_restore backup/myDatabase__2020-11-08_150102.gz
+
+
 
 # Helper : show current options values
 node mt options
 ```
 
-### Add in-line extra options
-
-You could play with env default options plus in-line command extra options
-```bash
-# create dump of a given 'shippingprices' collection, provide a target backup name as '2023_01_shippingPrices.gz', and show mongodump command
-MT_COLLECTION=shippingprices MT_FILENAME=2023_01_shippingPrices.gz MT_SHOW_COMMAND=true node mt dump
-
-# show backup in list
-node mt list
-
-# using mongo: drop a given collection
-mongo myDb --eval "db.shippingprices.drop()"
-
-# restore collection
-MSYS_NO_PATHCONV=1 MT_COLLECTION=shippingprices MT_SHOW_COMMAND=true node mt restore /backup/2023_01_shippingprices.gz
-# Note that collection option will produce wildcard in nsInclude arg '--nsInclude myDb.*'
-```
-
 
 ### Dropbox feature
-
-You have a dropbox access token in your preferences, (cf. "Mongo tools options")
-
-```
-# create a mongo dump is the same command
-node mt dump
-# restore a mongo dropbox dump 
-node mt restore /backup/myDatabase__2020-11-08_150102.gz
-
-# git bash for windows users having absolute path issue could use the following command
-unalias node
-MSYS_NO_PATHCONV=1 node mt restore /backup/myDatabase__2020-11-08_150102.gz
-
-# rotate local and dropbox backup files
-node mt rotation
-```
-
-## Library use
-
-### Install dependency
-
-You have to import as dependency
-```
-npm install node-mongotools
-```
-
-### Define the requirements, example:
-``` 
-import { MongoTools, MTOptions, MTCommand } from "node-mongotools";
-
-var mongoTools = new MongoTools();
-const mtOptions = {
-        db: 'myDb',
-        port: 17017,
-        path: '/opt/myapp/backups',
-        dropboxToken: process.env.MYAPP_DROPBOX_SECRET_TOKEN
-      };
-```
-
-### List dumps
-```
-var promiseResult = mongoTools.list(mtOptions);
-```
-
-### Dump
-```
-var promiseResult = mongoTools.mongodump(mtOptions);
-```
-
-### Restore
-```
-var promiseResult = mongoTools.mongorestore(mtOptions);
-```
-
-### Rotation
-```
-var promiseResult = mongoTools.rotation(mtOptions);
-```
-
-## Mongo tools options
-
-Each mongotools feature rely on Mongo tools options (aka. [MTOption](./lib/MTOptions.js)).
-
-Options precedence is the following:
-- take `options` attribute if set,
-- else take related environment variable if any,
-- else take default value if any,
-- else if it's a mandatory option, throw an error.
-
-TIP: you could also show current options by doing:
-```
-console.log(new MTOptions());
-```
-
-### shared options
-These options are used by dump and restore.
-
-Either `uri` or `host`/`port`/`db`:
-
-| option | env          | required | default value | description                                                                                                                                                   |
-|--------|--------------|----------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `uri`  | MT_MONGO_URI | **true** | (none)        | mongodump uri, example `mongodb+srv://granted-user:MySecretHere@cluster0.xzryx.mongodb.net/tMyDatababse`. You could omit database name to dump all databases. |
-
-or
-
-| option     | env              | required | default value | description                                                                         |
-|------------|------------------|----------|---------------|-------------------------------------------------------------------------------------|
-| `db`       | MT_MONGO_DB      | **true** | (none)        | mongo database name. For dump only, you could set it to `*` to dump all databases   |
-| `host`     | MT_MONGO_HOST    | false    | `127.0.0.1`   | mongo database hostname                                                             |
-| `port`     | MT_MONGO_PORT    | false    | `27017`       | mongo database port                                                                 |
-| `username` | MT_MONGO_USER    | false    | (none)        | mongo database username                                                             |
-| `password` | MT_MONGO_PWD     | false    | (none)        | mongo database password                                                             |
-| `authDb`   | MT_MONGO_AUTH_DB | false    | `admin`       | mongo auth database                                                                 |
-
-#### ssl options
-
-Optional ssl related options
-
-| option               | env                           | required | default value  | description                                                       |
-|----------------------|-------------------------------|----------|----------------|-------------------------------------------------------------------|
-| `ssl`                | MT_MONGO_SSL                  |  false   | (none)         | if "1" then add `--ssl` option                                    |
-| `sslCAFile`          | MT_MONGO_SSL_CA_FILE          |  false   | (none)         | .pem file containing the root certificate chain                   |
-| `sslPEMKeyFile`      | MT_MONGO_SSL_PEM_KEY_FILE     |  false   | (none)         | .pem file containing the certificate and key                      |
-| `sslPEMKeyPassword`  | MT_MONGO_SSL_PEM_KEY_PASSWORD |  false   | (none)         | password to decrypt the sslPEMKeyFile, if necessary               |
-| `sslCRLFile`         | MT_MONGO_SSL_CRL_FILE         |  false   | (none)         | pem file containing the certificate revocation list               |
-| `sslFIPSMode`        | MT_MONGO_SSL_FIPS             |  false   | (none)         | if "1" then use FIPS mode of the installed openssl library        |
-| `tlsInsecure`        | MT_MONGO_TLS_INSECURE         |  false   | (none)         | if "1" then  bypass the validation for server's certificate chain |
-
-### mongodump options
-
-| option                   | env                    | required | default value           | description                                                           |
-|--------------------------|------------------------|----------|-------------------------|-----------------------------------------------------------------------|
-| `path`                   | MT_PATH                | false    | `backup`                | dump target directory, created if it doesn't exist                    |
-| `dumpCmd `               |                        | false    | `mongodump`             | mongodump binary                                                      |
-| `fileName`               | MT_FILENAME            | false    | `<dbName_date_time.gz>` | dump target filename                                                  |
-| `encrypt`                |                        | false    | false                   | encrypt the dump using secret                                         |
-| `secret`                 | MT_SECRET              | false    | null                    | secret to use if encrypt is enabled                                   |
-| `encryptSuffix`          |                        | false    | `.enc`                  | encrypt file suffix                                                   |
-| `includeCollections`     |                        | false    | (none)                  | **Deprecated** - please use `collection`                              |
-| `collection`             | MT_COLLECTION          | false    | (none)                  | Collection to include, if not specified all collections are included  |
-| `excludeCollections`     | MT_EXCLUDE_COLLECTIONS | false    | (none)                  | Collections to exclude, if not specified all collections are included |
-| `numParallelCollections` |                        | false    | 4                       | Number of collections mongodump should export in parallel.            |
-| `viewsAsCollections`     |                        | false    | false                   | When specified, mongodump exports read-only views as collections.     |
-
-Simple example:
-```
-import { MongoTools, MTOptions, MTCommand } from "node-mongotools";
-var mongoTools = new MongoTools();
-
-mongoTools.mongodump({ 
-   db:'myDatabase',
-   path:'backup',
-   username:'root', password:'mypass', authDb:'admin'
-})
-.then((success) => console.info("success", success) )
-.catch((err) => console.error("error", err) );
-```
-
-### mongorestore options
-
-| option                   | env          | required | default value  | description                                                    |
-|--------------------------|--------------|----------|----------------|----------------------------------------------------------------|
-| `dumpFile`               | MT_DUMP_FILE | true     | (none)         | dump file to restore                                           |
-| `restoreCmd`             |              | false    | `mongorestore` | mongorestore binary                                            |
-| `dropBeforeRestore`      |              | false    | false          | set it to `true` to append `--drop` option                     |
-| `deleteDumpAfterRestore` |              | false    | false          | set it to `true` to remove restored backup file                |
-| `decrypt`                |              | false    | false          | decrypt the dump using secret. Activated if suffix is detected |
-| `secret`                 | MT_SECRET    | false    | null           | secret to use if decrypt is enabled                            |
-
-Simple example:
-```
-import { MongoTools, MTOptions, MTCommand } from "node-mongotools";
-var mongoTools = new MongoTools();
-
-mongoTools.mongorestore({ 
-   dumpFile:'backup/myDatabase__2020-11-8_160011.gz',
-   username:'root', password:'mypass', authDb:'admin'
-})
-.then((success) => {
-  console.info("success", success.message);
-  if (success.stderr) {
-    console.info("stderr:\n", success.stderr);// mongorestore binary write details on stderr
-  }
-})
-.catch((err) => console.error("error", err) );
-```
-
-### Dropbox options
-You could create a dropbox app to get a token : cf. https://www.dropbox.com/developers/apps/  "Generated access token"
-
-| option             |  env                  |  required | default value   | description                                       |
-|--------------------|-----------------------|-----------|-----------------|---------------------------------------------------|
-| `dropboxToken`     | MT_DROPBOX_TOKEN      | false     | (none)          | activate dropbox feature if present               |
-| `dropboxLocalPath` | MT_DROPBOX_LOCAL_PATH | false     | "dropbox"       | local directory to receive dropbox dump           |
-
-When a token is set, 
-- the `list` feature will list the `/` + `path` dropbox directory
-- the `mongodump` feature will upload the dump onto `/` + `path` dropbox directory (in addition to spawn it locally),
-- the `mongorestore` feature will use `dumpFile` as dropbox dump location 
-  and retrieve it into `dropboxLocalPath` before doing the mongorestore action.
-
-
-### Rotation options
-A safe time windows is defined by :
- * `now - rotationWindowsDays day(s)` ===> `now`  
-where backups can't be removed.
-
-Backup out of safe time windows are called `deprecated backup`.
-
-- `rotationMinCount`: minimum deprecated backups to keep,
-- `rotationCleanCount`: number of (oldest) deprecated backups to delete.
-
-| option                | env                      | required | default value | description                                            |
-|-----------------------|--------------------------|----------|---------------|--------------------------------------------------------|
-| `rotationDryMode`     | MT_ROTATION_DRY_MODE     | false    | false         | dont do delete actions, just print it                  |
-| `rotationWindowsDays` | MT_ROTATION_WINDOWS_DAYS | true     | 15            | safe time windows in days since now                    |
-| `rotationMinCount`    | MT_ROTATION_MIN_COUNT    | true     | 2             | minimum deprecated backups to keep.                    |
-| `rotationCleanCount`  | MT_ROTATION_CLEAN_COUNT  | true     | 10            | number of (oldest first) deprecated backups to delete. |
-
-Simple example:
-```
-MT_ROTATION_CLEAN_COUNT=2 \
-MT_ROTATION_DRY_MODE=true \
-MT_ROTATION_WINDOWS_DAYS=3 \ node mt rotation
-```
-Example details: if there is a backup that is more than 3 days old, keep 2 newer ones and delete the 10 oldest.
-
 Dropbox limits:
 - rotation feature will not apply if dropbox backup target directory content contains more than 2000 files.
-
-## How to contribute
-You're not a dev ? just submit an issue (bug, improvements, questions). Or else:
-* Clone
-* Install deps
-* Then mocha tests
-```
-git clone https://github.com/boly38/node-mongotools.git
-npm install
-npm run test
-```
-* you could also fork, feature branch, then submit a pull request.
-
-### Services or activated bots
-
-| badge                                                                                                                                                              | name                            | description                                               |
-|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------|:----------------------------------------------------------|
-| ![CI/CD](https://github.com/boly38/node-mongotools/workflows/mongotools-ci/badge.svg)                                                                              | Github actions                  | Continuous tests.                                         |
-| [![Audit](https://github.com/boly38/node-mongotools/actions/workflows/audit.yml/badge.svg)](https://github.com/boly38/node-mongotools/actions/workflows/audit.yml) | Github actions                  | Continuous vulnerability audit.                           |
-| [![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)                                                             | [Houndci](https://houndci.com/) | JavaScript  automated review (configured by `.hound.yml`) |

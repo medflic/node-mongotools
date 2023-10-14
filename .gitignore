@@ -15,3 +15,6 @@ tests/backup/
 
 #Files with secrets
 *.dontpush.*
+
+
+.env
