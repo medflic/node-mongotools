@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { MongoTools, MTOptions, MTCommand } from "./lib/mt.js";
 import { CronJob } from 'cron';
 async function dumpAndRotate(uri, path, { dropboxToken, dropBoxPath } = {}) {
