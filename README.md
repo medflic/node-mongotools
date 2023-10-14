@@ -56,6 +56,7 @@ export DROP_BOX_BACKUP_PATH_2="backup/db_2"
 
 # Environment variable for SCHEDULED_TIME format should be  SCHEDULED_TIME_1 SCHEDULED_TIME_2, SCHEDULED_TIME_3...
 
+# Use lib/dropbox to obtain the new DROP_BOX_REFRESH_TOKEN
 
 node mt_backup_and_rotate.js
             OR 
