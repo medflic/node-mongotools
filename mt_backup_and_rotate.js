@@ -47,7 +47,7 @@ const backupPath = process.argv.slice(2)[0] ||  `backup`
     if (process.env.SCHEDULED_BACKUP === 'true') {
       new CronJob(scheduledTime, () => dumpAndRotate(uri, path, {  dropboxToken: process.env.DROP_BOX_TOKEN, dropBoxPath }), null, true, 'Asia/Kolkata');
       console.log(`*** SUCCESS BACKUP INITIATED for ${uri.slice(-7)} AND BACKUP TIME IS ${scheduledTime} **** `)
-    } else {
-      dumpAndRotate(uri, path, {  dropboxToken: process.env.DROP_BOX_TOKEN, dropBoxPath });
     }
+    dumpAndRotate(uri, path, {  dropboxToken: process.env.DROP_BOX_TOKEN, dropBoxPath });
+    
 }
