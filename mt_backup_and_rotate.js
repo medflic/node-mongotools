@@ -41,7 +41,7 @@ async function dumpAndRotate(uri, path, { dropboxRefreshToken, dropBoxPath } = {
   mtc.logSuccess(dumpResult);
 
   // backups rotation
-  const rotationResult = await mt.rotation({path, rotationWindowsDays: 5, rotationMinCount:1})
+  const rotationResult = await mt.rotation({path, rotationWindowsDays: 5, rotationMinCount:1, dropboxToken, dropboxLocalPath: dropBoxPath })
     .catch(mtc.logError.bind(mtc));
   if (rotationResult === undefined) {// error case
     process.exit(1);
@@ -72,7 +72,6 @@ const backupPath = process.argv.slice(2)[0] ||  `backup`
     const dropBoxPath =  envs[dropBoxBackupDirPath[index]] || backupPath
     const scheduledTime = envs[scheduledTimes[index]] || '0 0 0 * * *';
     
-    console.log({ uri, path })
     if (process.env.SCHEDULED_BACKUP === 'true') {
       new CronJob(scheduledTime, () => dumpAndRotate(uri, path, {  dropboxRefreshToken: process.env.DROP_BOX_REFRESH_TOKEN, dropBoxPath }), null, true, 'Asia/Kolkata');
       console.log(`*** SUCCESS BACKUP INITIATED for ${uri.slice(-7)} AND BACKUP TIME IS ${scheduledTime} **** `)
