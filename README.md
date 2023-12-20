@@ -101,3 +101,18 @@ node mt options
 ### Dropbox feature
 Dropbox limits:
 - rotation feature will not apply if dropbox backup target directory content contains more than 2000 files.
+
+
+### Additional Instructions on Virginia Server. 
+
+- Created a adsbackup user, just need to update the role and db
+- Update the .env file on node_mongotools
+- start the service with `pm2 start mt_backup_and_rotate.js --interpreter=/home/build-user/.nvm/versions/node/v16.15.1/bin/node`
+```
+db.updateUser('adsbackup', {
+ roles: [
+       { role: "read", db: "creaudit_qa_new" },
+       { role: "read", db: "ads_locations" },
+    ]
+})
+```
