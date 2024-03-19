@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { MongoTools, MTCommand } from "./lib/mt.js";
 
 
