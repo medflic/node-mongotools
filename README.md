@@ -87,6 +87,10 @@ export MONGO_PASSWORD=pass
 export MONGO_DB=backupedDb
 export MONGO_TARGET_DB=restoreDb
 
+                                    OR
+
+create a .env file with all the above variables. .env file follows key=value pair format
+
 if MONGO_TARGET_DB is not given it will try to restore it to the same db where the backup has taken
 
 node mt_restore backup/myDatabase__2020-11-08_150102.gz
